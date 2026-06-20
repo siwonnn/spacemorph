@@ -11,10 +11,13 @@ export interface Planet {
   health: number
   maxHealth: number
   // orbital mechanics — position is derived, never stored directly
+  rotation: number
+  rotationSpeed: number // radians per second
   orbitCenter: Coordinate
   orbitRadius: number // distance from orbitCenter in pixels
   orbitSpeed: number  // radians per second
   angle: number       // current angle in radians
+  imageName: string
 }
 
 export interface Debris {

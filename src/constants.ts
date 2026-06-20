@@ -1,0 +1,1 @@
+export const MOUSE_RADIUS = 20;
