@@ -97,7 +97,7 @@ export default function Cursor({
         const dx = d.position.x - mx;
         const dy = d.position.y - my;
         const dist = Math.hypot(dx, dy);
-        if (dist <= d.radius + 12 && dist < foundDist) {
+        if (dist <= d.radius + 12 && dist < foundDist && !d.isBossDebris) {
           found = d;
           foundDist = dist;
         }

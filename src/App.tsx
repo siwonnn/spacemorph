@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import GameCanvas from './components/GameCanvas'
+import TitleScreen from './components/TitleScreen'
 import { getPlanetPosition, type GameState, type ExplosionEvent } from './types'
 import { calculateProgress, constructBossPlanet, createGame, tickGame } from './game'
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(createGame())
   const [explosions, setExplosions] = useState<ExplosionEvent[]>([])
+  const [gameStarted, setGameStarted] = useState(false)
   const explodedIds = useRef<Set<string>>(new Set())
   const bossIntroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const progress = calculateProgress(gameState)
@@ -93,7 +95,7 @@ export default function App() {
         return {
           ...prev,
           bossPhase: 'fight',
-          planets: [...prev.planets.filter(p => p.id === 'sun'), constructBossPlanet(prev.round)],
+          planets: [constructBossPlanet(prev.round)],
           debris: [],
           remainingTime: prev.timeLimit,
         }
@@ -120,18 +122,24 @@ export default function App() {
   }, [gameState.round])
 
   return (
-    <GameCanvas
-      state={gameState}
-      setState={setGameState}
-      onTick={onTick}
-      progress={progress}
-      explosions={explosions}
-      removeExplosion={(id) => setExplosions(prev => prev.filter(e => e.id !== id))}
-      addExplosion={(e) => setExplosions(prev => [...prev, e])}
-      round={gameState.round}
-      isRoundOver={isRoundOver}
-      isWin={isWin}
-      bossPhase={gameState.bossPhase}
-    />
+    <>
+      {!gameStarted ? (
+        <TitleScreen onStart={() => setGameStarted(true)} />
+      ) : (
+        <GameCanvas
+          state={gameState}
+          setState={setGameState}
+          onTick={onTick}
+          progress={progress}
+          explosions={explosions}
+          removeExplosion={(id) => setExplosions(prev => prev.filter(e => e.id !== id))}
+          addExplosion={(e) => setExplosions(prev => [...prev, e])}
+          round={gameState.round}
+          isRoundOver={isRoundOver}
+          isWin={isWin}
+          bossPhase={gameState.bossPhase}
+        />
+      )}
+    </>
   )
 }

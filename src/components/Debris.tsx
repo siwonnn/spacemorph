@@ -27,14 +27,19 @@ export default function DebrisComponent({
       <svg width={diameter} height={diameter} style={{
           transform: `rotate(${rotation}rad)`,
           transformOrigin: '50% 50%',
-          imageRendering : 'pixelated',
+          imageRendering: 'pixelated',
+          filter: debris.isFormedPlanet
+            ? 'drop-shadow(0 0 8px #60a5fa) drop-shadow(0 0 20px #3b82f6)'
+            : undefined,
         }}>
         <image
-          href={`assets/planets/fragments/${debris.imageName}`}
+          href={debris.isFormedPlanet
+            ? `assets/planets/${debris.imageName}`
+            : `assets/planets/fragments/${debris.imageName}`}
           x={0}
           y={0}
           width={diameter}
-          height={diameter}  
+          height={diameter}
         />
       </svg>
     </div>
@@ -49,7 +54,7 @@ function getFragmentImage(sourcePlanet: Planet) {
   return `${baseName}-${variant}.png`;
 }
 
-export function SpawnDebris(coordinate: Coordinate, sourcePlanet: Planet, radius: number): Debris {
+export function SpawnDebris(coordinate: Coordinate, sourcePlanet: Planet, radius: number, isBossDebris: boolean = false): Debris {
   const speed = DEBRIS_SPEED * (0.5 + Math.random())
   const direction = getPlanetDirection(sourcePlanet)
   const velocity = {
@@ -67,6 +72,7 @@ export function SpawnDebris(coordinate: Coordinate, sourcePlanet: Planet, radius
 
   return {
     id: Math.random().toString(36).substr(2, 11),
+    isBossDebris: isBossDebris,
     position: coordinate,
     velocity,
     sourcePlanetId: sourcePlanet.id,

@@ -1,4 +1,5 @@
-import { applyDamage } from '../game';
+import { applyDamage, playSound } from '../game';
+import { SpawnDebris } from './Debris';
 import { type Planet, type Coordinate, type GameState, getPlanetPosition } from '../types'
 
 export default function PlanetComponent({ planet, position, rotation }: { planet: Planet; position: Coordinate; rotation: number }) {
@@ -94,6 +95,15 @@ export function getPlanetsInRadius(position: Coordinate, state: GameState, radiu
 export function onPlanetClick(planet: Planet, state: GameState): GameState {
   if (planet.id === "sun" || planet.destroyed) {
     return state
+  }
+  if (planet.id === "boss") {
+    playSound("stone")
+    const bossPos = getPlanetPosition(planet)
+    const bossDebris = Array.from({ length: 1 }, () => SpawnDebris(bossPos, planet, 20, true))
+    return {
+      ...state,
+      debris: [...state.debris, ...bossDebris],
+    }
   }
 
   const { planets: updatedPlanets, newDebris } = applyDamage(state.planets, planet.id, state.clickDamage, state, true)

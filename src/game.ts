@@ -35,7 +35,7 @@ function tickDebris(
 
   const afterGravity = applyGravity(debris, planets, deltaTime, state.bossPhase)
   const moved = state.isAttracting
-    ? afterGravity.map(d => debrisMoveTowards(d, state.cursorPos, deltaTime))
+    ? afterGravity.map(d => d.isFormedPlanet ? d : debrisMoveTowards(d, state.cursorPos, deltaTime))
     : afterGravity
   const { survivors, planets: updatedPlanets } = resolveDebrisCollisions(state, moved, planets)
 
@@ -61,7 +61,48 @@ function tickDebris(
     }
   })
 
+  // Merge: if enough debris cluster near cursor while attracting, form a throwable planet
+  if (state.isAttracting && state.bossPhase === 'fight') {
+    const MERGE_RADIUS = 70
+    const MERGE_THRESHOLD = 10
+    const nearCursor = wrapped.filter(d => {
+      if (d.isFormedPlanet) return false
+      const dx = d.position.x - state.cursorPos.x
+      const dy = d.position.y - state.cursorPos.y
+      return Math.hypot(dx, dy) <= MERGE_RADIUS
+    })
+    if (nearCursor.length >= MERGE_THRESHOLD) {
+      const mergedIds = new Set(nearCursor.map(d => d.id))
+      const remaining = wrapped.filter(d => !mergedIds.has(d.id))
+      return {
+        debris: [...remaining, createFormedPlanet(state.cursorPos, nearCursor)],
+        planets: updatedPlanets,
+      }
+    }
+  }
+
   return { debris: wrapped, planets: updatedPlanets }
+}
+
+const FORMED_PLANET_DAMAGE = Math.round(700 / 3) // 1/3 of round-1 boss health, fixed
+
+function createFormedPlanet(position: Coordinate, mergedDebris: Debris[]): Debris {
+  const avgVx = mergedDebris.reduce((sum, d) => sum + d.velocity.x, 0) / mergedDebris.length
+  const avgVy = mergedDebris.reduce((sum, d) => sum + d.velocity.y, 0) / mergedDebris.length
+  return {
+    id: `formed-${Math.random().toString(36).slice(2)}`,
+    position: { ...position },
+    velocity: { x: avgVx, y: avgVy },
+    sourcePlanetId: 'formed',
+    radius: 15 + mergedDebris.length * 3,
+    damage: FORMED_PLANET_DAMAGE,
+    rotation: 0,
+    rotationSpeed: 0.4,
+    imageName: `planet${getRandomInt(1, 12)}.png`,
+    age: 0,
+    isBossDebris: false,
+    isFormedPlanet: true,
+  }
 }
 
 const CX = window.innerWidth / 2
@@ -176,6 +217,7 @@ function createIntroDebris(count: number = 30): Debris[] {
       sourcePlanetId: 'intro',
       imageName: `planet${getRandomInt(1, 12)}-${getRandomInt(1, 3)}.png`,
       age: 1,
+      isBossDebris: false
     }
   })
 }
@@ -414,11 +456,21 @@ const BOSS_INTRO_SPEED_LIMIT = 3500;
 
 export function applyGravity(debris: Debris[], planets: Planet[], deltaTime: number, bossPhase: BossPhase = 'none'): Debris[] {
   return debris.map((d) => {
+    if (d.isFormedPlanet) {
+      return {
+        ...d,
+        position: {
+          x: d.position.x + d.velocity.x * deltaTime,
+          y: d.position.y + d.velocity.y * deltaTime,
+        },
+      }
+    }
     let ax = 0;
     let ay = 0;
 
     for (let i = 0; i < planets.length; i++) {
       const planet = planets[i];
+      if (d.isBossDebris && planet.id === "boss") continue;
       if (planet.destroyed) continue;
 
       const planetPos = getPlanetPosition(planet);

@@ -1,6 +1,5 @@
 # SpaceMorph
-
-Destroy solar systems with debris, cursor, and bombs
+A chaotic and satisfying web game where you destroy solar systems with debris, cursor, and bombs
 
 ## Features
 - Randomly generated solar system with varying stats depending on the round, with 12 planets and 4 suns to randomize from

@@ -32,6 +32,8 @@ export interface Debris {
   sourcePlanetId: string
   imageName: string
   age: number
+  isBossDebris: boolean
+  isFormedPlanet?: boolean
 }
 
 export type BossPhase = 'none' | 'intro' | 'fight'

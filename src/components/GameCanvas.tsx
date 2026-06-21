@@ -223,6 +223,14 @@ export default function GameCanvas({
         </div>
       )}
 
+      {bossPhase === 'fight' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-30">
+          <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-center text-white/60 text-xs leading-relaxed">
+            <span className="text-white/90 font-semibold">Hold Z</span> to attract debris &nbsp;·&nbsp; collect <span className="text-white/90 font-semibold">10+</span> to form a planet &nbsp;·&nbsp; <span className="text-white/90 font-semibold">drag &amp; release</span> to throw
+          </div>
+        </div>
+      )}
+
       {isRoundOver && !openUpgrades && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="text-center">
