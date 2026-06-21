@@ -52,6 +52,17 @@
   }
 }
 
+@keyframes explode {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.25);
+    opacity: 0;
+  }
+}
+
 #root {
   width: 100%;
   max-width: 100%;

@@ -1,10 +1,14 @@
 import { MOUSE_RADIUS } from '../constants';
+import { applyDamage } from '../game';
 import { type Planet, type Coordinate, type GameState, getPlanetPosition } from '../types'
 
 export default function PlanetComponent({ planet, position, rotation }: { planet: Planet; position: Coordinate; rotation: number }) {
   const diameter = planet.radius * 2
   const healthPct = planet.health / planet.maxHealth
 
+  if (planet.destroyed){
+    return null
+  }
   return (
     <div
       className="absolute"
@@ -42,9 +46,10 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
         style={{
           transform: `rotate(${rotation}rad)`,
           transformOrigin: '50% 50%',
+          filter: planet.id === 'sun' ? 'drop-shadow(0 0 18px #fbbf24)' : undefined,
         }}
       >
-        <image 
+        <image
           href={`assets/planets/${planet.imageName}`}
           x={0}
           y={0}
@@ -63,20 +68,23 @@ export function getPlanetAtPosition(position: Coordinate, state : GameState): Pl
     const dx = position.x - planetPos.x
     const dy = position.y - planetPos.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    if (distance <= planet.radius + MOUSE_RADIUS*2) {
+    if (distance <= planet.radius*1.5) {
       return planet
     }
   }
 }
 
 export function onPlanetClick(planet: Planet, state: GameState): GameState {
-  if (planet.id === "sun") {
+  if (planet.id === "sun" || planet.destroyed) {
     return state
   }
+
+  
+  const { planets: updatedPlanets, newDebris } = applyDamage(state.planets, planet.id, 40, state)
+
   return {
     ...state,
-    planets: state.planets.map(p =>
-      p.id === planet.id ? { ...p, health: p.health - 10 } : p
-    ),
+    planets: updatedPlanets,
+    debris: [...state.debris, ...newDebris],
   }
 }
