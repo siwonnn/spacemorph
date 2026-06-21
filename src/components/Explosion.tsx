@@ -11,15 +11,19 @@ type Particle = {
 }
 
 export default function Explosion({
+  dimensions,
   position,
   particles,
   onDone,
   gifDuration = 5000,
+  gifSrc = '/assets/explosion.gif',
 }: {
+  dimensions: { width: number; height: number }
   position: Coordinate
   particles: Particle[]
   onDone: () => void
   gifDuration?: number
+  gifSrc?: string
 }) {
   const [showGif, setShowGif] = useState(true)
   const onDoneRef = useRef(onDone)
@@ -55,8 +59,8 @@ export default function Explosion({
         position: "absolute",
         left: position.x,
         top: position.y,
-        width: 200,
-        height: 200,
+        width: dimensions.width,
+        height: dimensions.height,
         transform: "translate(-50%, -50%)",
         zIndex: 9999,
         pointerEvents: "none",
@@ -65,7 +69,7 @@ export default function Explosion({
       {showGif && (
         <img
           ref={imgRef}
-          src="/assets/explosion.gif"
+          src={gifSrc}
           alt="explosion"
           style={{
             position: "absolute",
@@ -77,6 +81,7 @@ export default function Explosion({
             pointerEvents: "none",
             userSelect: "none",
             display: "block",
+            imageRendering: "pixelated",
           } as CSSProperties}
         />
       )}

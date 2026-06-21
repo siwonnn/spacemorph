@@ -34,18 +34,32 @@ export interface Debris {
   age: number
 }
 
+export type BossPhase = 'none' | 'intro' | 'fight'
+
 export interface GameState {
   round: number
   planets: Planet[]
   debris: Debris[]
   remainingTime: number // milliseconds
+  timeLimit: number
+  debrisPerDeath: number
+  clickDamage: number
+  debrisDamageBonus: number
+  hasBomb: boolean
+  bombCooldown: number
+  bombCooldownTime: number
+  isAttracting: boolean
+  cursorPos: Coordinate
+  bossPhase: BossPhase
 }
 
 export interface ExplosionEvent {
+  dimensions: {width: number, height: number}
   id: string
   position: Coordinate
   color: string
   particles: ExplosionParticle[]
+  gifSrc?: string
 }
 
 export interface ExplosionParticle {

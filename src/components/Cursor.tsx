@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { getPlanetAtPosition, onPlanetClick } from "./Planet";
-import type { GameState } from "../types";
-import { MOUSE_RADIUS } from "../constants";
+import { getPlanetAtPosition, getPlanetsInRadius, onPlanetClick } from "./Planet";
+import type { ExplosionEvent, GameState } from "../types";
+import { BOMB_DAMAGE, BOMB_RADIUS, MOUSE_RADIUS } from "../constants";
+import { applyDamage } from "../game";
 
 export default function Cursor({
   state,
   setState,
+  addExplosion,
 }: {
   state: GameState;
-  setState: React.Dispatch<GameState>;
+  setState: React.Dispatch<React.SetStateAction<GameState>>;
+  addExplosion: (e: ExplosionEvent) => void;
 }) {
   const [pos, setPos] = useState([0, 0]);
-  const [color, setColor] = useState<string>("grey");
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -29,6 +31,7 @@ export default function Cursor({
       const mx = e.clientX;
       const my = e.clientY;
       setPos([mx, my]);
+      setStateRef.current(s => ({ ...s, cursorPos: { x: mx, y: my } }));
 
       // If dragging a debris piece, move it to cursor position + offset
       const grabbedId = grabbedIdRef.current;
@@ -55,6 +58,37 @@ export default function Cursor({
       const mx = e.clientX;
       const my = e.clientY;
 
+    if (stateRef.current.hasBomb) {
+      setStateRef.current(s => ({ ...s, hasBomb: false, bombCooldown: stateRef.current.bombCooldownTime }));
+      addExplosion({
+        dimensions: { width: 350, height: 350 },
+        id: `bomb-${Date.now()}`,
+        position: { x: mx, y: my },
+        color: '#fb923c',
+        gifSrc: '/assets/explosion2.gif',
+        particles: [],
+      })
+
+      const hitPlanets = getPlanetsInRadius({ x: mx, y: my }, stateRef.current, BOMB_RADIUS);
+
+      if (hitPlanets.length > 0) {
+        setStateRef.current(prev => {
+          let planets = prev.planets;
+          let allNewDebris: typeof prev.debris = [];
+
+          for (const p of hitPlanets) {
+            const result = applyDamage(planets, p.id, BOMB_DAMAGE, prev);
+            planets = result.planets;
+            allNewDebris = [...allNewDebris, ...result.newDebris];
+          }
+
+          return { ...prev, planets, debris: [...prev.debris, ...allNewDebris] };
+        });
+      }
+
+      return;
+    }
+
       // try to grab debris first
       const debrisList = stateRef.current.debris;
       let found: typeof debrisList[0] | null = null;
@@ -80,7 +114,6 @@ export default function Cursor({
       // fallback: planet click behavior remains
       const planet = getPlanetAtPosition({ x: mx, y: my }, stateRef.current);
       if (planet) {
-        setColor(planet.color);
         setStateRef.current(onPlanetClick(planet, stateRef.current));
       }
     };
@@ -128,13 +161,26 @@ export default function Cursor({
       samplesRef.current = [];
     };
 
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (e.key === 'z') setStateRef.current(s => ({ ...s, isAttracting: true }))
+      
+      if (e.key === 'x' && stateRef.current.bombCooldown <= 0) setStateRef.current(s => ({ ...s, hasBomb: true }))
+    }
+    const keyupHandler = (e: KeyboardEvent) => {
+      if (e.key === 'z') setStateRef.current(s => ({ ...s, isAttracting: false }))
+    }
+
     window.addEventListener("mousemove", moveHandler);
     window.addEventListener("mousedown", downHandler);
     window.addEventListener("mouseup", upHandler);
+    window.addEventListener('keydown', keydownHandler);
+    window.addEventListener('keyup', keyupHandler);
     return () => {
       window.removeEventListener("mousemove", moveHandler);
       window.removeEventListener("mousedown", downHandler);
       window.removeEventListener("mouseup", upHandler);
+      window.removeEventListener('keydown', keydownHandler);
+      window.removeEventListener('keyup', keyupHandler);
     };
   }, []);
 

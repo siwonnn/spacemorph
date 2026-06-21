@@ -1,4 +1,3 @@
-import { MOUSE_RADIUS } from '../constants';
 import { applyDamage } from '../game';
 import { type Planet, type Coordinate, type GameState, getPlanetPosition } from '../types'
 
@@ -6,7 +5,7 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
   const diameter = planet.radius * 2
   const healthPct = planet.health / planet.maxHealth
 
-  if (planet.destroyed){
+  if (planet.destroyed) {
     return null
   }
   return (
@@ -21,14 +20,12 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
     >
       <div
         style={{
-          // excludes sun; crap solution dont hurt me
           display: planet.id == "sun" ? "none" : "",
-          
           position: 'absolute',
-          top: -10,
+          top: planet.id === 'boss' ? -14 : -10,
           left: 0,
           width: diameter,
-          height: 4,
+          height: planet.id === 'boss' ? 6 : 4,
           backgroundColor: '#374151',
         }}
       >
@@ -36,7 +33,7 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
           style={{
             width: `${healthPct * 100}%`,
             height: '100%',
-            backgroundColor: '#4ade80',
+            backgroundColor: planet.id === 'boss' ? '#ef4444' : '#4ade80',
           }}
         />
       </div>
@@ -46,7 +43,11 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
         style={{
           transform: `rotate(${rotation}rad)`,
           transformOrigin: '50% 50%',
-          filter: planet.id === 'sun' ? 'drop-shadow(0 0 18px #fbbf24)' : undefined,
+          filter: planet.id === 'boss'
+            ? 'drop-shadow(0 0 20px #ef4444) drop-shadow(0 0 45px #ff0000)'
+            : planet.id === 'sun'
+            ? 'drop-shadow(0 0 18px #fbbf24)'
+            : undefined,
         }}
       >
         <image
@@ -55,23 +56,39 @@ export default function PlanetComponent({ planet, position, rotation }: { planet
           y={0}
           width={diameter}
           height={diameter}
-        />
+          style={{ imageRendering: "pixelated" }}
+        /> 
       </svg>
     </div>
   )
 }
 
-export function getPlanetAtPosition(position: Coordinate, state : GameState): Planet | undefined {
+export function getPlanetAtPosition(position: Coordinate, state : GameState, radius: number = 0): Planet | undefined {
   const planets = state.planets
   for (const planet of planets) {
     const planetPos = getPlanetPosition(planet)
     const dx = position.x - planetPos.x
     const dy = position.y - planetPos.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    if (distance <= planet.radius*1.5) {
+    if (distance <= planet.radius*1.5 + radius) {
       return planet
     }
   }
+}
+
+export function getPlanetsInRadius(position: Coordinate, state: GameState, radius: number): Planet[] {
+  const planets = state.planets
+  const planetsInRadius: Planet[] = []
+  for (const planet of planets) {
+    const planetPos = getPlanetPosition(planet)
+    const dx = position.x - planetPos.x
+    const dy = position.y - planetPos.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    if (distance <= planet.radius*1.5 + radius) {
+      planetsInRadius.push(planet)
+    }
+  }
+  return planetsInRadius
 }
 
 export function onPlanetClick(planet: Planet, state: GameState): GameState {
@@ -79,8 +96,7 @@ export function onPlanetClick(planet: Planet, state: GameState): GameState {
     return state
   }
 
-  
-  const { planets: updatedPlanets, newDebris } = applyDamage(state.planets, planet.id, 40, state)
+  const { planets: updatedPlanets, newDebris } = applyDamage(state.planets, planet.id, state.clickDamage, state, true)
 
   return {
     ...state,

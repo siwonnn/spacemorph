@@ -27,6 +27,7 @@ export default function DebrisComponent({
       <svg width={diameter} height={diameter} style={{
           transform: `rotate(${rotation}rad)`,
           transformOrigin: '50% 50%',
+          imageRendering : 'pixelated',
         }}>
         <image
           href={`assets/planets/fragments/${debris.imageName}`}
@@ -40,7 +41,7 @@ export default function DebrisComponent({
   );
 }
 
-const DEBRIS_SPEED = 80
+const DEBRIS_SPEED = 500
 
 function getFragmentImage(sourcePlanet: Planet) {
   const baseName = sourcePlanet.imageName.replace(/\.png$/, "");
@@ -49,7 +50,6 @@ function getFragmentImage(sourcePlanet: Planet) {
 }
 
 export function SpawnDebris(coordinate: Coordinate, sourcePlanet: Planet, radius: number): Debris {
-  console.log("spawned debris")
   const speed = DEBRIS_SPEED * (0.5 + Math.random())
   const direction = getPlanetDirection(sourcePlanet)
   const velocity = {
